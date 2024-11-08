@@ -3,8 +3,8 @@ import { TextInput, View, StyleSheet, FlatList, Text, Image, TouchableOpacity } 
 import axios from 'axios';
 import { TOKEN_IMBD } from "@env";
 import { NavigationProp } from '@react-navigation/native';
+import { useUserContext } from '../providers/UserContext';
 
-// Define an interface for the movie data
 interface Movie {
   id: string;
   title: string;
@@ -13,6 +13,7 @@ interface Movie {
 }
 
 const Search = ({navigation}: {navigation: NavigationProp<any>}) => {
+  const { user } = useUserContext();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Movie[]>([]);
 
@@ -26,24 +27,17 @@ const Search = ({navigation}: {navigation: NavigationProp<any>}) => {
   };
 
   useEffect(() => {
-    if (query) {
       searchMovies(query);
-    } else {
-      setResults([]);
-    }
   }, [query]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: user?.theme ? '#fff' : '#000' }]}>
       <TextInput
-        style={styles.searchBar}
+        style={[styles.searchBar,{color: user?.theme ? '#000' : '#fff' }]}
         placeholder="Search Movies"
         placeholderTextColor="grey"
         value={query}
-        onChangeText={(text) => {
-          setQuery(text);
-          searchMovies(text);
-        }}
+        onChangeText={setQuery}
       />
       <FlatList
         data={results}
@@ -51,16 +45,16 @@ const Search = ({navigation}: {navigation: NavigationProp<any>}) => {
         numColumns={2}
         renderItem={({ item }: { item: Movie }) => (
           <View style={styles.resultBox}>
-              <Image
-                source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
-                style={styles.image}
-              />
+            <Image
+              source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
+              style={styles.image}
+            />
             <TouchableOpacity onPress={() => navigation.navigate('Details',{
                 data: item.title,
                 image: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
                 summary: item.overview
             })}>
-                <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.title}>{item.title}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -73,7 +67,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
-    backgroundColor: '#000',
   },
   searchBar: {
     height: 50,

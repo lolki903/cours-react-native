@@ -43,7 +43,7 @@ const FlatCard = ({ navigation, data, titleCard, showVote }: { navigation: Navig
         <Image source={{ uri: item.image }} style={styles.image} />
         {showVote ? (
         <View style={{display: 'flex',flexDirection:'row',alignItems:'center',justifyContent:'space-between',position:'absolute', bottom:6,width:'100%',paddingLeft:3,paddingRight:8}}>
-          <Text style={styles.titleInImage}>{truncatedTitle}</Text>
+          <Text style={[styles.titleInImage, , { color: textColor }]}>{truncatedTitle}</Text>
           <View style={{display:'flex',flexDirection:'row',alignItems:'center'}}>
             <FontAwesomeIcon icon={faStar} color='#f0c929' style={styles.titleInImage}/>
             <Text style={[styles.voteInImage, { color: textColor }]}>

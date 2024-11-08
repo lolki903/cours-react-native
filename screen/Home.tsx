@@ -16,7 +16,6 @@ const tmdbapi = axios.create({
     Authorization: 'Bearer ' + TOKEN_IMBD,
   },
 });
-console.log(TOKEN_IMBD);
 
 const DISCOVER_PATH = `/discover/movie?api_key=${process.env.API_KEY}&with_keywords=180547?language=fr-FR`;
 const TRENDING_PATH = '/trending/movie/day?language=fr-FR';
@@ -29,7 +28,6 @@ const Home = ({navigation} : {navigation : NavigationProp<any>}) => {
     const fetchData = async (path_url: string) => {
       try {
         const response = await tmdbapi.get(path_url);
-        console.log(response);
         const imagePath = 'https://image.tmdb.org/t/p/w500';
         const results = response.data.results;
         const dataArray = results.map((result: { title: string; poster_path: string; overview: string; vote_average:number }) => ({
