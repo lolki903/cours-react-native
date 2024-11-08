@@ -1,17 +1,17 @@
-import { faClose, faCross } from '@fortawesome/free-solid-svg-icons';
+import { faClose } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface DetailsFilm {
+    data: string
     title: string
     image: string
     summary: string
 }
 
-function DetailsScreen({route, navigation: { goBack } } : any ) {
-    const { data, image, summary } = route.params
-    console.log(image);
+const DetailsScreen= ({route, navigation: { goBack } } : any ) => {
+    const { data, image, summary } : DetailsFilm = route.params
   return (
     <View style={{ flex: 1, paddingTop:30, backgroundColor:'black', alignItems:'flex-end' }}>
         <TouchableOpacity onPress={() => goBack()}>

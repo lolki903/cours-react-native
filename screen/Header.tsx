@@ -1,54 +1,63 @@
-import { faCircle } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, ImageBackground, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, Dimensions } from 'react-native';
+import Swiper from 'react-native-swiper';
+import { useUserContext } from '../providers/UserContext';
+import LinearGradient from 'react-native-linear-gradient';
 
 const categories = ['All', 'Romance', 'Sport', 'Kids', 'Horror'];
 
-const Header = ({ data }) => {
-  const [OneData, setOneData] = useState<{ title?: string; image?: string }>({});
+type DataItem = {
+  title: string;
+  image: string;
+};
+
+const Header = ({ data }: { data: DataItem[] }) => {
+  const [oneData, setOneData] = useState<DataItem>({ title: '', image: '' });
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const { width } = Dimensions.get('window');
+  const { user } = useUserContext();
+  const isDarkMode = user?.theme;
 
   useEffect(() => {
-    if (data && data.length > 0) {
-      let index = 0;
+    let index = 0;
+    const interval = setInterval(() => {
+      if (data && data.length > 0) {
         setOneData({
           title: data[index].title,
           image: data[index].image,
         });
         index = (index + 1) % data.length;
-      } else {
-      setOneData({});
-    }
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [data]);
 
-  const renderCategory = ({ item }: any) => (
-    <TouchableOpacity style={styles.categoryButton}>
-      <Text style={styles.categoryText}>{item}</Text>
-    </TouchableOpacity>
-  );
-
-  const renderMovieCircle = ({ item }: any) => (
-    <TouchableOpacity onPress={()=>setOneData({
-      image: item.image,
-      title: item.title
-    })} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'transparent' }}>
-      <FontAwesomeIcon icon={faCircle} color='white'size={20}/>
-    </TouchableOpacity>
-  );
+  const colors = isDarkMode
+  ? { gradientColor: 'rgba(255, 255, 255, 1)', gradientColor2: 'rgba(255, 255, 255, 0)' }
+  : { gradientColor: 'rgba(0, 0, 0, 1)', gradientColor2: 'rgba(0, 0, 0, 0)' };
 
   return (
     <View style={styles.headerContainer}>
-      <ImageBackground source={{uri: OneData.image}} style={styles.imageBackground}>
-      <FlatList
-        horizontal
-        data={categories}
-        renderItem={renderCategory}
-        keyExtractor={(item) => item}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoryList}
-        />
+      <View style={styles.categoryList}>
+        {categories.map((category) => (
+          <TouchableOpacity key={category} onPress={() => setSelectedCategory(category)}>
+            <Text style={selectedCategory === category ? styles.buttonactif : styles.buttondisable}>{category}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <Swiper showsPagination={true} paginationStyle={styles.paginationStyle} dot={<View style={styles.dot}></View>} activeDot={<View style={styles.activeDot}></View>} style={styles.imageBackground}>
+        {data.slice(0, 6).map((item, index) => (
+          <ImageBackground key={index} source={{ uri: item.image }} style={[styles.imageBackground, { width: width }]} />
+        ))}
+      </Swiper>
+      <LinearGradient
+        colors={[colors.gradientColor, colors.gradientColor2]}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 0, y: 0 }}
+        style={[styles.containerBottom, styles.absolute, { bottom: 0 }]}
+      />
       <View style={styles.posterContainer}>
-        <Text style={styles.title}>{OneData.title}</Text>
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.button}>
             <Text style={styles.buttonText}>My List</Text>
@@ -66,61 +75,59 @@ const Header = ({ data }) => {
           </TouchableOpacity>
         </View>
       </View>
-    </ImageBackground>
-      <FlatList
-        horizontal
-        data={data.slice(0, 5)} // Limiting data to first 5 items
-        renderItem={renderMovieCircle}
-        keyExtractor={(item) => item.id}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{flex: 1, justifyContent: 'center', alignItems: 'flex-start',marginTop:10}}
-        />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   headerContainer: {
-    paddingTop: 10,
-    backgroundColor: '#000',
+    flex: 0,
+    position: 'relative',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   imageBackground: {
-    flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    height: 560,
+    resizeMode: 'cover',
+  },
+  containerBottom: {
+    width: '100%',
+    height: '30%',
+    alignItems: 'center',
   },
   categoryList: {
-    marginBottom: 10,
-  },
-  categoryButton: {
-    marginHorizontal: 10,
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    backgroundColor: '#333',
+    width: '95%',
+    position: 'absolute',
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     borderRadius: 20,
-  },
-  categoryText: {
-    color: '#fff',
-    fontSize: 14,
+    justifyContent: 'space-between',
+    top: 50,
+    borderWidth:4,
+    borderColor: 'rgba(0, 0, 0, 0.7)',
+    marginHorizontal: 10,
+    zIndex: 20,
   },
   posterContainer: {
-    marginBottom: 20,
-    padding:70
-  },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    position: 'absolute',
+    bottom: 10,
+    zIndex: 21,
   },
   buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
     width: '100%',
-    marginBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    bottom: 80,
+    left: '20%',
   },
   button: {
-    padding: 10,
+    padding: 12,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   buttonText: {
     color: '#fff',
@@ -128,29 +135,74 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 40,
+    justifyContent: 'flex-start',
+    marginTop: 20,
+    left: '5%',
+    position: 'absolute',
+    bottom: 30,
+    zIndex: 30,
   },
   wishlistButton: {
-    paddingVertical: 10,
+    paddingVertical: 15,
     paddingHorizontal: 20,
-    backgroundColor: '#333',
-    borderRadius: 5,
+    backgroundColor: '#555',
+    borderRadius: 10,
+    width: 190,
+    marginRight: '3%',
   },
   wishlistText: {
     color: '#fff',
     fontSize: 16,
+    textAlign: 'center',
   },
   detailsButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 30,
     backgroundColor: '#f0c929',
-    borderRadius: 5,
+    borderRadius: 10,
+    elevation: 5,
+    width: 190,
   },
   detailsText: {
     color: '#000',
     fontSize: 16,
+    textAlign: 'center',
+  },
+  buttonactif: {
+    fontSize: 18,
+    backgroundColor: '#fff',
+    padding: 15,
+    paddingHorizontal:15,
+    borderRadius: 20,
+  },
+  buttondisable: {
+    fontSize: 18,
+    color: '#fff',
+    padding: 15,
+  },
+  absolute: {
+    position: 'absolute',
+    zIndex: 10,
+  },
+  paginationStyle: {
+    bottom: 0,
+  },
+  dot: {
+    backgroundColor: 'white',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    margin: 3,
+    position: 'absolute',
+    bottom: 0,
+    zIndex: 37,
+  },
+  activeDot: {
+    backgroundColor: '#f0c929',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    margin: 3,
   },
 });
 

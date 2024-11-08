@@ -1,78 +1,75 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, SafeAreaView } from 'react-native';
 import Header from './Header';
-import { NavigationProp } from '@react-navigation/native';
 import FlatCard from './FlatCard';
 import { ScrollView } from 'react-native-gesture-handler';
 import axios from 'axios';
+import { TOKEN_IMBD } from "@env"
+import { NavigationProp } from '@react-navigation/native';
+import { Pub } from './Pub';
+import { useUserContext } from '../providers/UserContext';
 
-interface ItemProps {
-  id: string,
-  title: string,
-  image: string
-  type: TestEnum,
-}
-
-interface TestProp {
-  id: string,
-  title: string,
-  image: string
-  type: TestEnum,
-  description: string;
-}
-
-enum TestEnum {
-  SERIE = 'serie',
-  FILM = 'film',
-}
-
-const options = {
-  method: 'GET',
-  url: 'https://api.themoviedb.org/3/trending/movie/day?language=fr-FR',
+const tmdbapi = axios.create({
+  baseURL: `https://api.themoviedb.org/3`,
   headers: {
     accept: 'application/json',
-    Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxMzIzMWU0YzVjYTg3ZTBiMTJjNjZmMjIyZDZmMWIxNSIsIm5iZiI6MTcyODMzNDc0Ny4yNjEzMDQsInN1YiI6IjY3MDQ0OTBmY2M5MDRmMTJkOTEzYjU4ZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.BN42gLFMGRvzvpEAFpqGSzTEs7rjRL7rKaFALAwRaqA'
-  }
-};
-const Home = ({ navigation }: { navigation: NavigationProp<any>}) => {
-  const [Imagedata, setImagedata] = React.useState([]);
+    Authorization: 'Bearer ' + TOKEN_IMBD,
+  },
+});
+console.log(TOKEN_IMBD);
+
+const DISCOVER_PATH = `/discover/movie?api_key=${process.env.API_KEY}&with_keywords=180547?language=fr-FR`;
+const TRENDING_PATH = '/trending/movie/day?language=fr-FR';
+const Home = ({navigation} : {navigation : NavigationProp<any>}) => {
+  const { user } = useUserContext();
+  const [imagedata, setImagedata] = React.useState([]);
+  const [imagedataMarvel, setImagedataMarvel] = React.useState([]);
 
   React.useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (path_url: string) => {
       try {
-        const response = await axios.request(options);
+        const response = await tmdbapi.get(path_url);
+        console.log(response);
         const imagePath = 'https://image.tmdb.org/t/p/w500';
         const results = response.data.results;
-        const imageDataArray = results.map((result: { title: string; poster_path: string; overview: string; }) => ({
+        const dataArray = results.map((result: { title: string; poster_path: string; overview: string; vote_average:number }) => ({
           title: result.title,
           image: imagePath + result.poster_path,
           summary: result.overview,
+          vote: result.vote_average
         }));
-        setImagedata(imageDataArray);
+        if(path_url == TRENDING_PATH)
+          setImagedata(dataArray);
+        else if(path_url == DISCOVER_PATH)
+          setImagedataMarvel(dataArray)
       } catch (error) {
-        console.error(error);
+        console.error("error",error);
       }
     };
-    console.log(Imagedata);
-    fetchData();
+    fetchData(DISCOVER_PATH);
+    fetchData(TRENDING_PATH);
   }, []);
 
   return (
-    <ScrollView>
-      <Header data={Imagedata} />
-      <View style={styles.container}>
-        <FlatCard titleCard='Marvel studio' data={Imagedata} navigation={navigation}/>
-        <FlatCard titleCard='Best movies' data={Imagedata} navigation={navigation}/>
+    <SafeAreaView style={styles.safeContainer}>
+    <ScrollView style={[styles.container, { backgroundColor: user?.theme ? '#fff' : '#000' }]}>
+      <Header data={imagedata} />
+      <View>
+        <FlatCard showVote={false} titleCard='Marvel studio' data={imagedataMarvel} navigation={navigation}/>
+        <FlatCard showVote={true} titleCard='Best movies' data={imagedata} navigation={navigation}/>
       </View>
+      <Pub />
     </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#000',
-    padding: 10,
+  },
+  safeContainer: {
+    backgroundColor: '#000',
   },
   header: {
     flexDirection: 'row',
